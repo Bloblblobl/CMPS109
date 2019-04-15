@@ -10,39 +10,128 @@ using namespace std;
 #include "ubigint.h"
 #include "debug.h"
 
-ubigint::ubigint (unsigned long that): uvalue (that) {
-   DEBUGF ('~', this << " -> " << uvalue)
+ubigint::ubigint (const ubigint& that){
+   DEBUGF ('~', this << " -> " << that)
+   for (udigit_t digit: that) {
+      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit))
+   }
 }
 
-ubigint::ubigint (const string& that): uvalue(0) {
+ubigint::ubigint (const string& that){
    DEBUGF ('~', "that = \"" << that << "\"");
    for (char digit: that) {
       if (not isdigit (digit)) {
          throw invalid_argument ("ubigint::ubigint(" + that + ")");
       }
-      uvalue = uvalue * 10 + digit - '0';
+      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit))
    }
 }
 
+struct ordered_bigints { ubigint big; ubigint little; };
+ordered_bigints order_bigints (const ubigint& bi1, const ubigint& bi2) {
+   if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = &ubigint(bi2), .little = &ubigint(bi1)};
+   return {.big = &ubigint(bi1), .little = &ubigint(bi2)}
+}
+
 ubigint ubigint::operator+ (const ubigint& that) const {
-   return ubigint (uvalue + that.uvalue);
+   auto ordered_bigints = ordered_bigints(this, that);
+   udigit_t remainder = 0;
+   for (int i = 0; i < ordered_bigints->big.ubig_value.size(); i++) {
+      udigit_t curr_digit = ordered_bigints->big[i];
+      curr_digit += remainder;
+      remainder = 0;
+      if (i <= ordered_bigints->little.ubig_value.size() + 1) curr_digit += ordered_bigints->big.ubig_value[i];
+      if (curr_digit > 9) {
+         remainder = curr_digit % 10;
+         curr_digit = curr_digit / 10;
+      }
+      ordered_bigints->big.ubig_value[i] = curr_digit;
+   }
+   if (remainder > 0) ordered_bigints->big.ubig_value.push_back(remainder);
+   return ordered_bigints->big;
 }
 
 ubigint ubigint::operator- (const ubigint& that) const {
-   if (*this < that) throw domain_error ("ubigint::operator-(a<b)");
-   return ubigint (uvalue - that.uvalue);
+   if (this->ubig_value.size() < that.ubig_value.size()) throw domain_error ("ubigint::operator-(a<b)");
+   ubigint result = ubigint(this);
+   bool borrow = false;
+   for (int i = 0; i < this->ubig_value.size(); i++) {
+      udigit_t curr_digit = this->ubig_value[i];
+      if (borrow) {
+         borrow = false;
+         curr_digit -= 1;
+      }
+      if (i <= that.ubig_value.size()) curr_digit -= that.ubig_value[i];
+      if (curr_digit < 0) {
+         borrow = true;
+         curr_digit += 10;
+      }
+      result.ubig_value[i] = curr_digit;
+   }
+   if (borrow) throw domain_error ("ubigint::operator-(a<b)");
+   return result;
 }
 
 ubigint ubigint::operator* (const ubigint& that) const {
-   return ubigint (uvalue * that.uvalue);
+   ubigint product = ubigint();
+   auto ordered_bigints = order_bigints(this, that);
+   ubigint big = ordered_bigints.big;
+   ubigint little = ordered_bigints.little;
+   for (int i = 0; i < big.ubig_value.size(); i++) {
+      udigit_t carry = 0;
+      for (int j = 0; j < big.ubig_value.size(); j++) {
+         udigit_t curr_digit = 0;
+         correct_size = false;
+         if (product.ubig_value.size() > i + j) {
+            correct_size = true;
+            curr_digit += product.ubig_value[i + j];
+         }
+         curr_digit += carry + big.ubig_value[i] * little.ubig_value[j];
+         if (curr_digit > 9) {
+            carry = curr_digit / 10;
+            curr_digit = curr_digit % 10;
+         }
+         if (product.ubig_value.size() <= i + j) {
+            while (product.ubig_value.size() < i + j) {
+               product.ubig_value.push_back(0);
+            }
+            product.ubig_value.push_back(curr_digit)
+         }
+         else product.ubig_value[i + j] = curr_digit;
+      }
+      if (product.ubig_value.size() <= i + little.ubig_value.size()) {
+         while (product.ubig_value.size() < i + little.ubig_value.size()) {
+            product.ubig_value.push_back(0);
+         }
+         product.ubig_value.push_back(carry)
+      }
+      else product.ubig_value[i + little.ubig_value.size()] = carry;
+   }
 }
 
 void ubigint::multiply_by_2() {
-   uvalue *= 2;
+   udigit_t carry = false;
+   for (int i = 0; i < this->ubig_value.size(); i++) {
+      udigit_t curr_digit = this->ubig_value[i];
+      curr_digit *= 2;
+      if (carry) {
+         curr_digit += 1;
+         carry = false
+      }
+      if (curr_digit > 9) {
+         curr_digit -= 10;
+         carry = true;
+      }
+      this->ubig_value[i] = curr_digit;
+   }
+   if (carry) this->ubig_value.push_back(1);
 }
 
 void ubigint::divide_by_2() {
-   uvalue /= 2;
+   for (int i = 0; i < this->ubig_value.size(); i++) {
+      this->ubig_value[i] /= 2;
+   }
+   while (this->ubig_value.size() > 0 and this->ubig_value.back() == 0) this->ubig_value.pop_back();
 }
 
 
@@ -50,10 +139,10 @@ struct quo_rem { ubigint quotient; ubigint remainder; };
 quo_rem udivide (const ubigint& dividend, const ubigint& divisor_) {
    // NOTE: udivide is a non-member function.
    ubigint divisor {divisor_};
-   ubigint zero {0};
+   ubigint zero {"0"};
    if (divisor == zero) throw domain_error ("udivide by zero");
-   ubigint power_of_2 {1};
-   ubigint quotient {0};
+   ubigint power_of_2 {"1"};
+   ubigint quotient {"0"};
    ubigint remainder {dividend}; // left operand, dividend
    while (divisor < remainder) {
       divisor.multiply_by_2();
@@ -79,11 +168,21 @@ ubigint ubigint::operator% (const ubigint& that) const {
 }
 
 bool ubigint::operator== (const ubigint& that) const {
-   return uvalue == that.uvalue;
+   if (that.ubig_value.size() != this->ubig_value.size()) return false;
+   for (int i = 0; i < this->ubig_value.size(); i++) {
+      if (that.ubig_value[i] != this->ubig_value[i]) return false;
+   }
+   return true;
 }
 
 bool ubigint::operator< (const ubigint& that) const {
-   return uvalue < that.uvalue;
+   if (that.ubig_value.size() > this->ubig_value.size()) return true;
+   if (that.ubig_value.size() < this->ubig_value.size()) return false;
+   for (int i = this->ubig_value.size() - 1; i >= 0; i--)
+   {
+      if (that.ubig_value[i] <= this->ubig_value.size()) return false;
+   }
+   return true;
 }
 
 ostream& operator<< (ostream& out, const ubigint& that) { 
