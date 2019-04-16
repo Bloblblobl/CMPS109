@@ -27,7 +27,6 @@ class ubigint {
       ubigint (const string&);
 
       struct ordered_bigints { ubigint big; ubigint little; };
-      ordered_bigints order_bigints (const ubigint& bi1, const ubigint& bi2);
 
       ubigint operator+ (const ubigint&) const;
       ubigint operator- (const ubigint&) const;

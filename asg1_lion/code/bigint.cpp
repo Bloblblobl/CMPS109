@@ -22,11 +22,6 @@ bigint::bigint (const string& that) {
    uvalue = ubigint (that.substr (is_negative ? 1 : 0));
 }
 
-ordered_bigints bigint::order_bigints (const bigint& bi1, const bigint& bi2) {
-   if (bi2.uvalue.ubig_value.size() > bi1.uvalue.ubig_value.size()) return {.big = &bigint(bi2), .little = &bigint(bi1)};
-   return {.big = &bigint(bi1), .little = &bigint(bi2)};
-}
-
 bigint bigint::operator+ () const {
    return *this;
 }
@@ -37,7 +32,8 @@ bigint bigint::operator- () const {
 
 bigint bigint::operator+ (const bigint& that) const {
    if (is_negative != that.is_negative) {
-      auto ordered = that.order_bigints(*this, that);
+      ordered_bigints ordered = {.big = *this, .little = that};
+      if (that.uvalue.ubig_value.size() > this->uvalue.ubig_value.size()) ordered = {.big = that, .little = *this};
       return {ordered.big.uvalue - ordered.little.uvalue, ordered.big.is_negative}
    }
    return {uvalue + that.uvalue, is_negative};

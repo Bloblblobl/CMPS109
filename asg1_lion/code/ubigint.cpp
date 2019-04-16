@@ -26,27 +26,24 @@ ubigint::ubigint (const string& that){
       ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit));
    }
 }
-ordered_bigints ubigint::order_bigints (const ubigint& bi1, const ubigint& bi2) {
-   if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = ubigint(bi2), .little = ubigint(bi1)};
-   return {.big = ubigint(bi1), .little = ubigint(bi2)};
-}
 
 ubigint ubigint::operator+ (const ubigint& that) const {
-   auto ordered = that.order_bigints(*this, that);
+   ordered_bigints ordered = {.big = *this, .little = that};
+   if (that.ubig_value.size() > this->ubig_value.size()) ordered = {.big = that, .little = *this};
    udigit_t remainder = 0;
-   for (std::vector<int>::size_type i = 0; i < ordered->big.ubig_value.size(); i++) {
-      udigit_t curr_digit = ordered->big[i];
+   for (std::vector<int>::size_type i = 0; i < ordered.big.ubig_value.size(); i++) {
+      udigit_t curr_digit = ordered.big[i];
       curr_digit += remainder;
       remainder = 0;
-      if (i <= ordered->little.ubig_value.size() + 1) curr_digit += ordered->big.ubig_value[i];
+      if (i <= ordered.little.ubig_value.size() + 1) curr_digit += ordered.big.ubig_value[i];
       if (curr_digit > 9) {
          remainder = curr_digit % 10;
          curr_digit = curr_digit / 10;
       }
-      ordered->big.ubig_value[i] = curr_digit;
+      ordered.big.ubig_value[i] = curr_digit;
    }
-   if (remainder > 0) ordered->big.ubig_value.push_back(remainder);
-   return ordered->big;
+   if (remainder > 0) ordered.big.ubig_value.push_back(remainder);
+   return ordered.big;
 }
 
 ubigint ubigint::operator- (const ubigint& that) const {
@@ -72,7 +69,8 @@ ubigint ubigint::operator- (const ubigint& that) const {
 
 ubigint ubigint::operator* (const ubigint& that) const {
    ubigint product = ubigint();
-   auto ordered = that.order_bigints(*this, that);
+   ordered_bigints ordered = {.big = *this, .little = that};
+   if (that.ubig_value.size() > this->ubig_value.size()) ordered = {.big = that, .little = *this};
    ubigint big = ordered.big;
    ubigint little = ordered.little;
    for (std::vector<int>::size_type i = 0; i < big.ubig_value.size(); i++) {
