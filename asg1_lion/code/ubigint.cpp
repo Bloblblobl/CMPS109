@@ -13,7 +13,7 @@ using namespace std;
 ubigint::ubigint (const ubigint& that){
    DEBUGF ('~', this << " -> " << that)
    for (udigit_t digit: that) {
-      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit))
+      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit));
    }
 }
 
@@ -23,20 +23,20 @@ ubigint::ubigint (const string& that){
       if (not isdigit (digit)) {
          throw invalid_argument ("ubigint::ubigint(" + that + ")");
       }
-      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit))
+      ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit));
    }
 }
 
 struct ordered_bigints { ubigint big; ubigint little; };
 ordered_bigints order_bigints (const ubigint& bi1, const ubigint& bi2) {
-   if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = &ubigint(bi2), .little = &ubigint(bi1)};
-   return {.big = &ubigint(bi1), .little = &ubigint(bi2)};
+   if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = ubigint(bi2), .little = ubigint(bi1)};
+   return {.big = ubigint(bi1), .little = ubigint(bi2)};
 }
 
 ubigint ubigint::operator+ (const ubigint& that) const {
    auto ordered = order_bigints(this, that);
    udigit_t remainder = 0;
-   for (int i = 0; i < ordered->big.ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < ordered->big.ubig_value.size(); i++) {
       udigit_t curr_digit = ordered->big[i];
       curr_digit += remainder;
       remainder = 0;
@@ -55,7 +55,7 @@ ubigint ubigint::operator- (const ubigint& that) const {
    if (ubig_value.size() < that.ubig_value.size()) throw domain_error ("ubigint::operator-(a<b)");
    ubigint result = ubigint(this);
    bool borrow = false;
-   for (int i = 0; i < ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < ubig_value.size(); i++) {
       udigit_t curr_digit = ubig_value[i];
       if (borrow) {
          borrow = false;
@@ -77,9 +77,9 @@ ubigint ubigint::operator* (const ubigint& that) const {
    auto ordered = order_bigints(this, that);
    ubigint big = ordered.big;
    ubigint little = ordered.little;
-   for (int i = 0; i < big.ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < big.ubig_value.size(); i++) {
       udigit_t carry = 0;
-      for (int j = 0; j < big.ubig_value.size(); j++) {
+      for (std::vector<int>::size_type j = 0; j < big.ubig_value.size(); j++) {
          udigit_t curr_digit = 0;
          correct_size = false;
          if (product.ubig_value.size() > i + j) {
@@ -103,15 +103,16 @@ ubigint ubigint::operator* (const ubigint& that) const {
          while (product.ubig_value.size() < i + little.ubig_value.size()) {
             product.ubig_value.push_back(0);
          }
-         product.ubig_value.push_back(carry)
+         product.ubig_value.push_back(carry);
       }
       else product.ubig_value[i + little.ubig_value.size()] = carry;
    }
+   return product;
 }
 
 void ubigint::multiply_by_2() {
    udigit_t carry = false;
-   for (int i = 0; i < ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < ubig_value.size(); i++) {
       udigit_t curr_digit = ubig_value[i];
       curr_digit *= 2;
       if (carry) {
@@ -128,7 +129,7 @@ void ubigint::multiply_by_2() {
 }
 
 void ubigint::divide_by_2() {
-   for (int i = 0; i < ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < ubig_value.size(); i++) {
       ubig_value[i] /= 2;
    }
    while (ubig_value.size() > 0 and ubig_value.back() == 0) ubig_value.pop_back();
@@ -169,7 +170,7 @@ ubigint ubigint::operator% (const ubigint& that) const {
 
 bool ubigint::operator== (const ubigint& that) const {
    if (that.ubig_value.size() != ubig_value.size()) return false;
-   for (int i = 0; i < ubig_value.size(); i++) {
+   for (std::vector<int>::size_type i = 0; i < ubig_value.size(); i++) {
       if (that.ubig_value[i] != ubig_value[i]) return false;
    }
    return true;
@@ -178,14 +179,19 @@ bool ubigint::operator== (const ubigint& that) const {
 bool ubigint::operator< (const ubigint& that) const {
    if (that.ubig_value.size() > ubig_value.size()) return true;
    if (that.ubig_value.size() < ubig_value.size()) return false;
-   for (int i = ubig_value.size() - 1; i >= 0; i--)
+   for (std::vector<int>::size_type i = ubig_value.size() - 1; i >= 0; i--)
    {
       if (that.ubig_value[i] <= ubig_value.size()) return false;
    }
    return true;
 }
 
-ostream& operator<< (ostream& out, const ubigint& that) { 
-   return out << "ubigint(" << that.uvalue << ")";
+ostream& operator<< (ostream& out, const ubigint& that) {
+   out << "ubigint(";
+   vect = that.ubig_value;
+   for (std::vector<unsigned char>::reverse_iterator it = vect.rbegin(); it != vect.rend(); ++it) {
+      out << *it;
+   }
+   return out << ")";
 }
 
