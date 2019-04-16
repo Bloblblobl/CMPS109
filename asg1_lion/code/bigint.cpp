@@ -10,6 +10,8 @@ using namespace std;
 #include "debug.h"
 #include "relops.h"
 
+struct ordered_bigints { bigint big; bigint little; };
+
 bigint::bigint (const ubigint& uvalue_, bool is_negative_):
                 uvalue(uvalue_), is_negative(is_negative_) {
 }
@@ -32,8 +34,13 @@ bigint bigint::operator- () const {
 
 bigint bigint::operator+ (const bigint& that) const {
    if (is_negative != that.is_negative) {
-      ordered_bigints ordered = {.big = *this, .little = that};
-      if (that.uvalue.ubig_value.size() > this->uvalue.ubig_value.size()) ordered = {.big = that, .little = *this};
+      ordered_bigints ordered;
+      ordered.big = *this;
+      ordered.little = that;
+      if (that.ubig_value.size() > this->ubig_value.size()) {
+         ordered.big = that;
+         ordered.little = *this;
+      }
       return {ordered.big.uvalue - ordered.little.uvalue, ordered.big.is_negative}
    }
    return {uvalue + that.uvalue, is_negative};
