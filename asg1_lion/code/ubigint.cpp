@@ -39,7 +39,7 @@ ubigint ubigint::operator+ (const ubigint& that) const {
    }
    int remainder = 0;
    for (std::vector<int>::size_type i = 0; i < ordered.big.ubig_value.size(); i++) {
-      int curr_digit = static_cast<int>(ordered.big[i]);
+      int curr_digit = static_cast<int>(ordered.big.ubig_value[i]);
       curr_digit += remainder;
       remainder = 0;
       if (i <= ordered.little.ubig_value.size() + 1) curr_digit += static_cast<int>(ordered.big.ubig_value[i]);
