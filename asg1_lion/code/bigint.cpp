@@ -22,7 +22,6 @@ bigint::bigint (const string& that) {
    uvalue = ubigint (that.substr (is_negative ? 1 : 0));
 }
 
-struct ordered_bigints { bigint big; bigint little; };
 ordered_bigints bigint::order_bigints (const bigint& bi1, const bigint& bi2) {
    if (bi2.uvalue.ubig_value.size() > bi1.uvalue.ubig_value.size()) return {.big = &bigint(bi2), .little = &bigint(bi1)};
    return {.big = &bigint(bi1), .little = &bigint(bi2)};

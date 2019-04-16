@@ -24,6 +24,9 @@ class bigint {
       bigint (const ubigint&, bool is_negative = false);
       explicit bigint (const string&);
 
+      struct ordered_bigints { bigint big; bigint little; };
+      ordered_bigints order_bigints (const bigint& bi1, const bigint& bi2);
+
       bigint operator+() const;
       bigint operator-() const;
 

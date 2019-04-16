@@ -26,8 +26,6 @@ ubigint::ubigint (const string& that){
       ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit));
    }
 }
-
-struct ordered_bigints { ubigint big; ubigint little; };
 ordered_bigints ubigint::order_bigints (const ubigint& bi1, const ubigint& bi2) {
    if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = ubigint(bi2), .little = ubigint(bi1)};
    return {.big = ubigint(bi1), .little = ubigint(bi2)};
@@ -95,7 +93,7 @@ ubigint ubigint::operator* (const ubigint& that) const {
             while (product.ubig_value.size() < i + j) {
                product.ubig_value.push_back(0);
             }
-            product.ubig_value.push_back(curr_digit)
+            product.ubig_value.push_back(curr_digit);
          }
          else product.ubig_value[i + j] = curr_digit;
       }
