@@ -23,7 +23,7 @@ bigint::bigint (const string& that) {
 }
 
 struct ordered_bigints { bigint big; bigint little; };
-ordered_bigints order_bigints (const bigint& bi1, const bigint& bi2) {
+ordered_bigints bigint::order_bigints (const bigint& bi1, const bigint& bi2) {
    if (bi2.uvalue.ubig_value.size() > bi1.uvalue.ubig_value.size()) return {.big = &bigint(bi2), .little = &bigint(bi1)};
    return {.big = &bigint(bi1), .little = &bigint(bi2)};
 }
@@ -38,7 +38,7 @@ bigint bigint::operator- () const {
 
 bigint bigint::operator+ (const bigint& that) const {
    if (is_negative != that.is_negative) {
-      auto ordered = order_bigints(this, that);
+      auto ordered = that.order_bigints(*this, that);
       return {ordered.big.uvalue - ordered.little.uvalue, ordered.big.is_negative}
    }
    return {uvalue + that.uvalue, is_negative};

@@ -12,7 +12,7 @@ using namespace std;
 
 ubigint::ubigint (const ubigint& that){
    DEBUGF ('~', this << " -> " << that)
-   for (udigit_t digit: that) {
+   for (udigit_t digit: that.ubig_value) {
       ubig_value.insert(ubig_value.begin(), static_cast<udigit_t>(digit));
    }
 }
@@ -28,13 +28,13 @@ ubigint::ubigint (const string& that){
 }
 
 struct ordered_bigints { ubigint big; ubigint little; };
-ordered_bigints order_bigints (const ubigint& bi1, const ubigint& bi2) {
+ordered_bigints ubigint::order_bigints (const ubigint& bi1, const ubigint& bi2) {
    if (bi2.ubig_value.size() > bi1.ubig_value.size()) return {.big = ubigint(bi2), .little = ubigint(bi1)};
    return {.big = ubigint(bi1), .little = ubigint(bi2)};
 }
 
 ubigint ubigint::operator+ (const ubigint& that) const {
-   auto ordered = order_bigints(this, that);
+   auto ordered = that.order_bigints(*this, that);
    udigit_t remainder = 0;
    for (std::vector<int>::size_type i = 0; i < ordered->big.ubig_value.size(); i++) {
       udigit_t curr_digit = ordered->big[i];
@@ -53,7 +53,7 @@ ubigint ubigint::operator+ (const ubigint& that) const {
 
 ubigint ubigint::operator- (const ubigint& that) const {
    if (ubig_value.size() < that.ubig_value.size()) throw domain_error ("ubigint::operator-(a<b)");
-   ubigint result = ubigint(this);
+   ubigint result = ubigint(*this);
    bool borrow = false;
    for (std::vector<int>::size_type i = 0; i < ubig_value.size(); i++) {
       udigit_t curr_digit = ubig_value[i];
@@ -74,14 +74,14 @@ ubigint ubigint::operator- (const ubigint& that) const {
 
 ubigint ubigint::operator* (const ubigint& that) const {
    ubigint product = ubigint();
-   auto ordered = order_bigints(this, that);
+   auto ordered = that.order_bigints(*this, that);
    ubigint big = ordered.big;
    ubigint little = ordered.little;
    for (std::vector<int>::size_type i = 0; i < big.ubig_value.size(); i++) {
       udigit_t carry = 0;
       for (std::vector<int>::size_type j = 0; j < big.ubig_value.size(); j++) {
          udigit_t curr_digit = 0;
-         correct_size = false;
+         bool correct_size = false;
          if (product.ubig_value.size() > i + j) {
             correct_size = true;
             curr_digit += product.ubig_value[i + j];
@@ -117,7 +117,7 @@ void ubigint::multiply_by_2() {
       curr_digit *= 2;
       if (carry) {
          curr_digit += 1;
-         carry = false
+         carry = false;
       }
       if (curr_digit > 9) {
          curr_digit -= 10;
@@ -188,7 +188,7 @@ bool ubigint::operator< (const ubigint& that) const {
 
 ostream& operator<< (ostream& out, const ubigint& that) {
    out << "ubigint(";
-   vect = that.ubig_value;
+   auto vect = that.ubig_value;
    for (std::vector<unsigned char>::reverse_iterator it = vect.rbegin(); it != vect.rend(); ++it) {
       out << *it;
    }
