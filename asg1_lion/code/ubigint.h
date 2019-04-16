@@ -16,15 +16,18 @@ class ubigint {
    friend ostream& operator<< (ostream&, const ubigint&);
    private:
       using udigit_t = unsigned char;
+   public:
       using ubigvalue_t = vector<udigit_t>;
       ubigvalue_t ubig_value;
-   public:
+
       void multiply_by_2();
       void divide_by_2();
 
       ubigint() = default; // Need default ctor as well.
       ubigint (const ubigint&);
       ubigint (const string&);
+
+      void clear_zeroes();
 
       ubigint operator+ (const ubigint&) const;
       ubigint operator- (const ubigint&) const;

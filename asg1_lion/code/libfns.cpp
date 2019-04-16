@@ -15,12 +15,15 @@ bigint pow (const bigint& base_arg, const bigint& exponent_arg) {
    static const bigint TWO ("2");
    DEBUGF ('^', "base = " << base << ", exponent = " << exponent);
    if (base == ZERO) return ZERO;
+   cout << "a";
    bigint result = ONE;
    if (exponent < ZERO) {
       base = ONE / base;
       exponent = - exponent;
    }
+   cout << "b";
    while (exponent > ZERO) {
+      cout << "c";
       if (exponent % TWO == ONE) {
          result = result * base;
          exponent = exponent - ONE;

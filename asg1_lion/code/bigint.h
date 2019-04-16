@@ -22,6 +22,7 @@ class bigint {
 
       bigint() = default; // Needed or will be suppressed.
       bigint (const ubigint&, bool is_negative = false);
+      bigint (const bigint&);
       explicit bigint (const string&);
 
       bigint operator+() const;

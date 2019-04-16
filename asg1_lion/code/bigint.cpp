@@ -10,14 +10,14 @@ using namespace std;
 #include "debug.h"
 #include "relops.h"
 
-struct ordered_bigints { bigint big; bigint little; };
-
 bigint::bigint (const ubigint& uvalue_, bool is_negative_):
                 uvalue(uvalue_), is_negative(is_negative_) {
 }
 
 bigint::bigint (const bigint& that):
-                uvalue(that.uvalue), is_negative(that.is_negative)
+                uvalue(that.uvalue), is_negative(that.is_negative) {
+
+}
 
 bigint::bigint (const string& that) {
    is_negative = that.size() > 0 and that[0] == '_';
@@ -34,39 +34,38 @@ bigint bigint::operator- () const {
 
 bigint bigint::operator+ (const bigint& that) const {
    if (is_negative != that.is_negative) {
-      ordered_bigints ordered;
-      ordered.big = *this;
-      ordered.little = that;
-      if (that.ubig_value.size() > this->ubig_value.size()) {
-         ordered.big = that;
-         ordered.little = *this;
+      bigint big = *this;
+      bigint little = that;
+      if (that.uvalue.ubig_value.size() > uvalue.ubig_value.size()) {
+         big = that;
+         little = *this;
       }
-      return {ordered.big.uvalue - ordered.little.uvalue, ordered.big.is_negative}
+      return {big.uvalue - little.uvalue, big.is_negative};
    }
    return {uvalue + that.uvalue, is_negative};
 }
 
 bigint bigint::operator- (const bigint& that) const {
-   if (is_negative != that.is_negative) return {uvalue + that.uvalue, is_negative}
+   if (is_negative != that.is_negative) return {uvalue + that.uvalue, is_negative};
    return {uvalue - that.uvalue};
 }
 
 
 bigint bigint::operator* (const bigint& that) const {
-   bool sign = true;
-   if (is_negative != that.is_negative) sign = false;
+   bool sign = false;
+   if (is_negative != that.is_negative) sign = true;
    return {uvalue * that.uvalue, sign};
 }
 
 bigint bigint::operator/ (const bigint& that) const {
-   bool sign = true;
-   if (is_negative != that.is_negative) sign = false;
+   bool sign = false;
+   if (is_negative != that.is_negative) sign = true;
    return {uvalue / that.uvalue, sign};
 }
 
 bigint bigint::operator% (const bigint& that) const {
-   bool sign = true;
-   if (is_negative != that.is_negative) sign = false;
+   bool sign = false;
+   if (is_negative != that.is_negative) sign = true;
    return {uvalue % that.uvalue, sign};
 }
 
@@ -81,7 +80,6 @@ bool bigint::operator< (const bigint& that) const {
 }
 
 ostream& operator<< (ostream& out, const bigint& that) {
-   return out << "bigint(" << (that.is_negative ? "-" : "+")
-              << "," << that.uvalue << ")";
+   if (that.is_negative) out << "-";
+   return out << that.uvalue;
 }
-
