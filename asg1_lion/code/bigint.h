@@ -21,7 +21,6 @@ class bigint {
    public:
 
       bigint() = default; // Needed or will be suppressed.
-      bigint (long);
       bigint (const ubigint&, bool is_negative = false);
       explicit bigint (const string&);
 
